@@ -1,0 +1,25 @@
+[project]
+name = "chiropractic-counseling-bot"
+version = "0.1.0"
+description = "カイロプラクター見習い向け 初回カウンセリング練習LINEボット"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "line-bot-sdk>=3.13.0",
+    "anthropic>=0.40.0",
+    "python-dotenv>=1.0.1",
+]
+
+[dependency-groups]
+dev = [
+    "black>=24.10.0",
+    "flake8>=7.1.1",
+]
+
+[tool.black]
+line-length = 120
+target-version = ["py311"]
+
+[tool.flake8]
+max-line-length = 120
