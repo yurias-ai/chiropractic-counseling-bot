@@ -127,3 +127,23 @@ src/
 - v1.2: カスタム患者入力
 - v1.3: 総合指導法（サプリ・寝具・体操・スキンケア）提案練習モード
 - v2.0: Supabase導入で履歴永続化
+
+## CI/CD設定
+
+### GitHub Actions（PR時に自動実行）
+| チェック | 対象 | コマンド |
+|---------|------|---------|
+| TypeScript | frontend | `npx tsc --noEmit` |
+| Lint (JS/TS) | frontend | `npm run lint` |
+| Build | frontend | `npm run build` |
+| Lint (Python) | backend | `flake8 --max-line-length=120` |
+| Format (Python) | backend | `black --check --line-length=120` |
+
+### ブランチ戦略
+- `main`: 本番環境
+- `develop`: 開発統合ブランチ
+- `feature/*`: 機能開発ブランチ
+
+### リポジトリ
+- URL: https://github.com/yurias-ai/chiropractic-counseling-bot
+- 公開設定: Public
