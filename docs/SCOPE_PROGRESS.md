@@ -12,9 +12,21 @@
 - [x] Phase 6: バックエンド計画（Agent 6）— ディレクトリ構造・モジュール責務確定
 - [x] Phase 7: バックエンド実装（Agent 7）— FastAPI + Claude連携 + /api/practice/*
 - [x] Phase 8: API統合 — フロントとバックを同一オリジンで配信
-- [ ] Phase 9: E2Eテスト（Agent 9）— ブラウザ実機テスト
-- [ ] Phase 10: ローカル動作確認（Agent 10）— `localhost:8940` で1セッション完走
-- [ ] Phase 11: デプロイ（Agent 11）— Renderへデプロイ
+- [x] Phase 9: E2Eテスト（Agent 9）— ブラウザ実機テスト（表情切替・音声・採点）
+- [x] Phase 10: ローカル動作確認（Agent 10）— `localhost:8940` で1セッション完走
+- [x] Phase 11: デプロイ（Agent 11）— Render 無料プランに公開（Basic認証付き）
+
+## 公開URL
+https://chiro-counseling-bot.onrender.com
+
+ログイン情報は Render ダッシュボード → chiro-counseling-bot → Environment の `BASIC_AUTH_USERS` を参照。
+ローカルでは `.env.local` の `BASIC_AUTH_USERS` に同じ値が設定されている。
+
+## 追加機能（デモ向け強化）
+- 田中美咲さんの5表情写真自動切替（neutral / nervous / worried / relieved / thinking）
+- 音声入力（Web Speech API、Chrome/Safari対応）
+- 患者の音声読み上げ（Web Speech Synthesis、ON/OFF切替可）
+- HTTP Basic認証で2ユーザー限定アクセス
 
 ## エンドポイント管理表
 
@@ -50,5 +62,5 @@
 
 | サービス | アカウント | APIキー/トークン | セットアップ |
 |---------|-----------|----------------|------------|
-| Anthropic API | [ ] | [ ] ANTHROPIC_API_KEY | [ ] 課金設定 |
-| Render | [ ] | — | [ ] サービス作成・環境変数設定 |
+| Anthropic API | [x] | [x] ANTHROPIC_API_KEY | [x] 課金設定 |
+| Render | [x] | — | [x] サービス作成・環境変数設定 |
