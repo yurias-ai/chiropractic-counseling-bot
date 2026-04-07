@@ -28,6 +28,7 @@ class Session:
     history: list[Message] = field(default_factory=list)
     started_at: datetime = field(default_factory=datetime.utcnow)
     last_active_at: datetime = field(default_factory=datetime.utcnow)
+    last_expression: str = "neutral"
 
     def touch(self) -> None:
         self.last_active_at = datetime.utcnow()
@@ -36,6 +37,7 @@ class Session:
         self.state = "idle"
         self.history = []
         self.started_at = datetime.utcnow()
+        self.last_expression = "neutral"
         self.touch()
 
     def to_messages(self) -> list[dict]:

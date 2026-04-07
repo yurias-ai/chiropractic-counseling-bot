@@ -29,6 +29,7 @@ class StartRequest(BaseModel):
 class StartResponse(BaseModel):
     session_id: str
     greeting: str
+    expression: str
     state: str
 
 
@@ -39,6 +40,7 @@ class MessageRequest(BaseModel):
 
 class MessageResponse(BaseModel):
     reply: str
+    expression: str
     state: str
 
 
@@ -78,22 +80,22 @@ def _wrap_anthropic_call(callable_, *args, **kwargs):
 # ─────────────────────────────────────────────
 @router.post("/start", response_model=StartResponse)
 def start(req: StartRequest) -> StartResponse:
-    """練習を開始（または再開始）し、患者役の初回挨拶を返す"""
+    """練習を開始（または再開始）し、患者役の初回挨拶と表情を返す"""
     session_id = req.session_id or str(uuid.uuid4())
     session = get_session(session_id)
-    greeting = _wrap_anthropic_call(start_practice, session)
-    return StartResponse(session_id=session_id, greeting=greeting, state=session.state)
+    expression, greeting = _wrap_anthropic_call(start_practice, session)
+    return StartResponse(session_id=session_id, greeting=greeting, expression=expression, state=session.state)
 
 
 @router.post("/message", response_model=MessageResponse)
 def message(req: MessageRequest) -> MessageResponse:
-    """ユーザーメッセージを送信し、患者役応答を返す"""
+    """ユーザーメッセージを送信し、患者役応答と表情を返す"""
     session = get_session(req.session_id)
     if session.state != "practicing":
         raise HTTPException(status_code=400, detail="練習が開始されていません。先に /start を呼んでください。")
 
-    reply = _wrap_anthropic_call(continue_practice, session, req.text.strip())
-    return MessageResponse(reply=reply, state=session.state)
+    expression, reply = _wrap_anthropic_call(continue_practice, session, req.text.strip())
+    return MessageResponse(reply=reply, expression=expression, state=session.state)
 
 
 @router.post("/score", response_model=ScoreResponse)
