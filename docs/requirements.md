@@ -3,7 +3,7 @@
 ## 1. プロジェクト概要
 
 ### 成果目標
-カイロプラクター見習いがLINE上で初回カウンセリング（問診）の練習を行い、AI患者役との対話と5項目採点フィードバックを通じて、問診力・信頼構築力・指導提案力を鍛えるための練習用LINEボット。
+カイロプラクター見習いがブラウザで初回カウンセリング（問診）の練習を行い、AI患者役との対話と5項目採点フィードバックを通じて、問診力・信頼構築力・指導提案力を鍛えるための練習用Webアプリ。デモはURLを共有するだけで誰でも体験可能。
 
 ### 成功指標
 
@@ -13,9 +13,10 @@
 - デモ版では患者1パターン固定で、練習→採点の往復が安定して成立する
 
 **定性的指標**
-- LINEのトーク画面でリアルな初回問診の緊張感を体験できる
+- ブラウザのチャット画面でリアルな初回問診の緊張感を体験できる
 - 採点が「傷つけない・甘やかさない」バランスで成長を促す
 - 患者キャラがブレず、誘導質問・専門用語の使いすぎに対して自然な戸惑いを返す
+- URLを共有するだけで、ログイン不要・インストール不要で即体験できる
 
 ### スコープ
 
@@ -36,18 +37,18 @@
 | 機能ID | 機能名 | 概要 |
 |--------|-------|------|
 | F-001 | 患者役ロールプレイ | 「練習開始」で患者キャラと問診開始 |
-| F-002 | トリガーワード検出 | 「練習開始」「採点して」「リセット」を検出して状態遷移 |
-| F-003 | セッション状態管理 | ユーザーごとに状態と会話履歴をインメモリ管理（TTL 1時間） |
+| F-002 | アクションボタン | 「練習開始」「採点して」「リセット」をボタンで操作 |
+| F-003 | セッション状態管理 | session_idごとに状態と会話履歴をインメモリ管理（TTL 1時間） |
 | F-004 | 採点フィードバック | 5項目×10点満点＋一言アドバイスを生成 |
 | F-005 | ヘルスチェック | `/api/health` でサーバー稼働確認 |
-| F-006 | Quick Reply ボタン | 「練習開始」「採点して」「リセット」をワンタップ操作可能に |
-| F-007 | ウェルカムメッセージ | 友だち追加（follow イベント）時に使い方ガイドを自動送信 |
-| F-008 | 採点後の次アクション誘導 | 採点結果末尾に「もう一度練習する」Quick Reply を添付 |
+| F-006 | チャットUI | LINE風バブル表示・タイピングインジケーター・採点カード |
+| F-007 | ウェルカム画面 | 初回アクセス時に使い方ガイドと開始ボタンを表示 |
+| F-008 | 採点後の再挑戦導線 | 採点表示後、「練習開始」ボタンが「もう一度やり直す」に変化 |
 
 ### ロール
 
-- **練習ユーザー**（カイロプラクター見習い）: LINE友だち追加して練習する
-- 認証はLINEプラットフォームに委任、アプリ側の認証実装は不要
+- **練習ユーザー**（カイロプラクター見習い）: ブラウザでURLを開いて練習する
+- 認証なし（デモ版）。セッションIDは初回アクセス時にサーバーが発番し、ブラウザ側 localStorage に保存
 
 ### セッション状態遷移
 
@@ -61,29 +62,38 @@
 
 ## 3. エンドポイント仕様
 
-### E-001: LINE Webhook受信
-- **パス**: `POST /webhook/line`
-- **目的**: LINEからのメッセージイベント受信→処理→返信
-- **処理フロー**:
-  1. `X-Line-Signature` ヘッダーで署名検証
-  2. イベントごとに `user_id` と `text` を抽出
-  3. トリガーワード判定（`detect_trigger`）
-  4. セッション取得 or 新規作成（`get_session`）
-  5. 状態に応じた処理:
-     - `start` → セッションリセット→患者役の初回挨拶を生成→返信
-     - `score` → 全会話履歴を採点プロンプトに渡して採点生成→返信→セッションリセット
-     - `continue` → 会話履歴に追加→患者役応答生成→返信
-     - `reset` → セッションリセット→確認メッセージ返信
-  6. LINE Reply APIで返信（`reply_to_line`）
+### E-000: チャットUI配信
+- **パス**: `GET /`
+- **目的**: 静的HTML（`static/index.html`）を返す
+- **同一オリジン**: 同じFastAPIサーバーがUIとAPIを配信
 
-### E-001b: フォローイベント（友だち追加）
-- **トリガー**: LINE `follow` イベント
-- **動作**: ウェルカムメッセージ＋使い方ガイド＋Quick Reply（「練習開始」）を返信
+### E-001: 練習開始
+- **パス**: `POST /api/practice/start`
+- **Body**: `{"session_id": "<optional>"}`
+- **動作**: session_idを発番（または既存使用）、セッションをリセットし、患者役の初回挨拶を生成
+- **Response**: `{"session_id": "...", "greeting": "...", "state": "practicing"}`
 
-### E-002: ヘルスチェック
+### E-002: メッセージ送信
+- **パス**: `POST /api/practice/message`
+- **Body**: `{"session_id": "...", "text": "..."}`
+- **動作**: 会話履歴に追加→患者役応答を生成
+- **Response**: `{"reply": "...", "state": "practicing"}`
+- **エラー**: 練習未開始時は400
+
+### E-003: 採点
+- **パス**: `POST /api/practice/score`
+- **Body**: `{"session_id": "..."}`
+- **動作**: 会話履歴を採点役に渡し結果を返す。終了後セッションは自動リセット
+- **Response**: `{"scoring": "...", "turns": N}`
+
+### E-004: リセット
+- **パス**: `POST /api/practice/reset`
+- **Body**: `{"session_id": "..."}`
+- **Response**: `{"ok": true}`
+
+### E-005: ヘルスチェック
 - **パス**: `GET /api/health`
-- **目的**: サーバー稼働確認（必須）
-- **レスポンス**: `{"status": "ok"}`
+- **Response**: `{"status": "ok"}`
 
 ---
 
@@ -91,14 +101,13 @@
 
 | ID | 名前 | 入力 | 出力 | 役割 |
 |----|------|------|------|------|
-| T-001 | `verify_line_signature` | header, body | bool | LINE署名検証 |
-| T-002 | `detect_trigger` | text | `start`/`score`/`reset`/`continue` | トリガー判定 |
-| T-003 | `get_session` | user_id | session dict | セッション取得or作成 |
-| T-004 | `call_patient_ai` | history | 患者応答テキスト | 患者役Claude呼び出し |
-| T-005 | `call_scoring_ai` | history | 採点結果テキスト | 採点役Claude呼び出し |
-| T-006 | `reply_to_line` | reply_token, text | 完了 | LINE返信 |
-| T-007 | `reset_session` | user_id | 完了 | セッション初期化 |
-| T-008 | `cleanup_expired_sessions` | なし | 完了 | TTL超過セッション削除（バックグラウンド） |
+| T-001 | `get_session` | session_id | Session | セッション取得or作成 |
+| T-002 | `start_practice` | session | str | 患者役の初回挨拶を生成し履歴に保存 |
+| T-003 | `continue_practice` | session, text | str | ユーザー発言追加→患者応答生成 |
+| T-004 | `call_patient_ai` | session | str | 患者役Claude呼び出し |
+| T-005 | `call_scoring_ai` | session | str | 採点役Claude呼び出し |
+| T-006 | `reset_session` | session_id | Session | セッション初期化 |
+| T-007 | `cleanup_expired_sessions` | なし | 件数 | TTL超過セッション削除（バックグラウンド） |
 
 ---
 
@@ -110,7 +119,7 @@
 sessions: dict[str, Session] = {}
 
 class Session:
-    user_id: str           # LINE User ID
+    user_id: str           # session_id（UUID v4、ブラウザlocalStorage保存）
     state: str             # "idle" | "practicing" | "scoring"
     history: list[Message] # Claude messages形式
     started_at: datetime   # セッション開始時刻
@@ -236,19 +245,14 @@ response = client.messages.create(
 
 ### 必須対応
 - **ヘルスチェックエンドポイント**: `GET /api/health`
-- **グレースフルシャットダウン**: SIGTERM対応、8秒タイムアウト
 - **HTTPS強制**（本番環境、Render等が自動対応）
-- **LINE署名検証**: 全Webhookリクエストで `X-Line-Signature` を検証
-- **入力値サニタイゼーション**: メッセージテキストの長さ上限（5000文字）
+- **入力値サニタイゼーション**: メッセージテキストの長さ上限（5000文字、Pydanticで検証）
 - **環境変数管理**: APIキー類はすべて環境変数経由、ハードコード禁止
-
-### LINE固有
-- Channel Secret / Access Token は `.env.local` 管理
-- リプライトークンの有効期限（1分以内）に注意
+- **CORS**: 同一オリジン配信のため不要（フロントとAPIが同一サーバー）
 
 ### Claude API
 - APIキーは環境変数のみ
-- レート制限エラー時はユーザーに「混雑しています、少し待って再送してください」と返す
+- レート制限エラー時は503で「混雑しています」を返却
 
 ---
 
@@ -258,13 +262,12 @@ response = client.messages.create(
 言語: Python 3.11+
 フレームワーク: FastAPI
 ASGIサーバー: uvicorn
-LINE SDK: line-bot-sdk-python (v3)
+フロントエンド: 静的HTML + Vanilla JS（ビルド不要）
 AI SDK: anthropic
 モデル: claude-sonnet-4-5
 パッケージ管理: uv
 セッション管理: Pythonインメモリdict + TTL
 デプロイ先: Render (無料枠)
-ローカル開発: ngrok (Webhook公開)
 ```
 
 ### コード品質基準
@@ -279,9 +282,8 @@ AI SDK: anthropic
 
 | サービス | 用途 | アカウント | 料金 |
 |---------|------|-----------|------|
-| LINE Developers | Messaging APIチャネル | 必要 | 無料枠 |
 | Anthropic API | Claude Sonnet 4.5 | 必要 | 従量課金 |
-| Render | Webhookサーバーホスティング | 必要 | 無料枠 |
+| Render | Webアプリホスティング | 必要 | 無料枠 |
 
 ### 概算コスト
 - 初期費用: 0円

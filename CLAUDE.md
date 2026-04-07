@@ -11,18 +11,19 @@
 
 ## プロジェクト概要
 
-カイロプラクター見習い向けの初回カウンセリング練習LINEボット。
+カイロプラクター見習い向けの初回カウンセリング練習Webアプリ。
 患者役AIとの対話練習＋5項目採点フィードバックで、問診力を鍛える。
 
 ## アプローチ
-**AIコントローラー型（チャットボット）** — UIなし、LINEのトーク画面が唯一のインターフェース
+**シングルページWebチャット** — ブラウザでURLを開くだけで体験できるデモ。
+バックエンド（FastAPI）が静的HTML（`static/index.html`）と練習APIを同一オリジンで配信する。
 
 ## 技術スタック
 
 ```yaml
 言語: Python 3.11+
 フレームワーク: FastAPI + uvicorn
-LINE SDK: line-bot-sdk-python (v3)
+フロントエンド: 静的HTML + Vanilla JS（ビルド不要）
 AI SDK: anthropic
 モデル: claude-sonnet-4-5
 パッケージ管理: uv
@@ -36,15 +37,13 @@ AI SDK: anthropic
 backend: 8940
 ```
 
-※ ローカル開発時は ngrok でこのポートを公開してLINE Webhook URLに設定する。
+ブラウザで `http://localhost:8940/` を開けば即体験可能。
 
 ## 環境変数
 
 `.env.local` に配置（プロジェクトルート）:
 
 ```
-LINE_CHANNEL_SECRET=...
-LINE_CHANNEL_ACCESS_TOKEN=...
 ANTHROPIC_API_KEY=...
 PORT=8940
 SESSION_TTL_SECONDS=3600
@@ -62,22 +61,23 @@ SESSION_TTL_SECONDS=3600
 - 関数・変数: snake_case
 - 定数: UPPER_SNAKE_CASE
 
-## ディレクトリ構成（予定）
+## ディレクトリ構成
 
 ```
 src/
-├── main.py              # FastAPIエントリーポイント
+├── main.py              # FastAPIエントリーポイント、静的配信
 ├── config/__init__.py   # 環境変数集約
-├── webhook/
-│   └── line_handler.py  # /webhook/line ハンドラー
+├── api/
+│   └── routes.py        # /api/practice/* （start/message/score/reset）
 ├── ai/
 │   ├── patient.py       # 患者役Claude呼び出し
 │   ├── scoring.py       # 採点役Claude呼び出し
 │   └── prompts.py       # システムプロンプト定義
-├── session/
-│   └── store.py         # インメモリセッションストア + TTL
-└── utils/
-    └── line_signature.py # 署名検証
+└── session/
+    └── store.py         # インメモリセッションストア + TTL
+
+static/
+└── index.html           # チャットUI（Vanilla JS）
 ```
 
 ## コード品質
@@ -91,15 +91,9 @@ src/
 - 既存プロセスを確認してから起動（`lsof -i :8940`）
 - サーバーは1つのみ維持
 
-### LINE Webhook開発
-- ローカル開発時は `ngrok http 8940` で公開
-- 取得したHTTPS URL + `/webhook/line` を LINE Developers の Webhook URL に設定
-- 「Webhookの利用」を ON、「応答メッセージ」を OFF にする
-
 ### エラー対応
 - 環境変数エラー → 全タスク停止、即報告（試行錯誤禁止）
-- LINE署名検証失敗 → 401返却、ログ記録
-- Claude APIエラー → ユーザーに「混雑しています」返信、ログ記録
+- Claude APIエラー → 503/502 で「混雑しています」返却、ログ記録
 - 同じエラー3回 → Web検索で最新情報を収集
 
 ### デプロイ
@@ -119,7 +113,7 @@ src/
 - Claude APIを1回呼び出すのみ（Tool Use不要、自律ループ不要）
 - 患者役: system + 会話履歴 → 1回応答
 - 採点役: system + 会話履歴テキスト化 → 1回応答
-- ストリーミング不要（LINEは一括返信）
+- ストリーミング不要（HTTP一括返信）
 
 ## 将来拡張
 

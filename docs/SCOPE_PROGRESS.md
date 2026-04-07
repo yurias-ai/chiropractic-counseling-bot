@@ -2,39 +2,42 @@
 
 ## Phase進捗
 
-このプロジェクトはAIコントローラー型（LINEチャットボット）のため、Phase 3/4/8はスキップします。
+このプロジェクトは「URLを開くだけで体験できるデモ」のため、一部のPhaseは簡略化しています。
 
 - [x] Phase 1: 要件定義（Agent 1）
 - [x] Phase 2: Git管理（Agent 2）
-- Phase 3: フロントエンド基盤 — スキップ（UIなし）
-- Phase 4: ページ実装 — スキップ（UIなし）
+- [x] Phase 3: フロントエンド基盤 — 静的HTML + Vanilla JS（ビルド不要、`static/index.html`）
+- [x] Phase 4: ページ実装 — チャットUI（バブル/タイピング/採点カード）
 - [x] Phase 5: 環境構築（Agent 5）— pyproject.toml / .env.local テンプレート作成
 - [x] Phase 6: バックエンド計画（Agent 6）— ディレクトリ構造・モジュール責務確定
-- [x] Phase 7: バックエンド実装（Agent 7）— Webhook + Claude連携 + Quick Reply
-- Phase 8: API統合 — スキップ（フロントエンドなし）
-- [ ] Phase 9: E2Eテスト（Agent 9）— LINEシミュレータでの統合テスト
-- [ ] Phase 10: ローカル動作確認（Agent 10）— ngrok経由で実機LINEから動作確認
+- [x] Phase 7: バックエンド実装（Agent 7）— FastAPI + Claude連携 + /api/practice/*
+- [x] Phase 8: API統合 — フロントとバックを同一オリジンで配信
+- [ ] Phase 9: E2Eテスト（Agent 9）— ブラウザ実機テスト
+- [ ] Phase 10: ローカル動作確認（Agent 10）— `localhost:8940` で1セッション完走
 - [ ] Phase 11: デプロイ（Agent 11）— Renderへデプロイ
 
 ## エンドポイント管理表
 
 | ID | エンドポイント | メソッド | 機能 | 着手 | 完了 |
 |----|--------------|---------|------|------|------|
-| E-001 | /webhook/line | POST | LINE Webhook受信→処理→返信（Follow含む） | [x] | [x] |
-| E-002 | /api/health | GET | ヘルスチェック | [x] | [x] |
+| E-000 | / | GET | チャットUI（index.html）配信 | [x] | [x] |
+| E-001 | /api/practice/start | POST | 練習開始（患者初回挨拶生成） | [x] | [x] |
+| E-002 | /api/practice/message | POST | ユーザー発言→患者応答 | [x] | [x] |
+| E-003 | /api/practice/score | POST | 採点生成（終了後セッションリセット） | [x] | [x] |
+| E-004 | /api/practice/reset | POST | セッションリセット | [x] | [x] |
+| E-005 | /api/health | GET | ヘルスチェック | [x] | [x] |
 
 ## 内部ツール（関数）管理表
 
 | ID | 関数名 | 役割 | 着手 | 完了 |
 |----|-------|------|------|------|
-| T-001 | WebhookParser.parse | LINE署名検証（SDK標準） | [x] | [x] |
-| T-002 | detect_trigger | トリガーワード検出 | [x] | [x] |
-| T-003 | get_session | セッション取得or作成 | [x] | [x] |
+| T-001 | get_session | セッション取得or作成 | [x] | [x] |
+| T-002 | start_practice | 患者役の初回挨拶を生成 | [x] | [x] |
+| T-003 | continue_practice | 会話継続（履歴追加→応答生成） | [x] | [x] |
 | T-004 | call_patient_ai | 患者役Claude呼び出し | [x] | [x] |
 | T-005 | call_scoring_ai | 採点役Claude呼び出し | [x] | [x] |
-| T-006 | _reply (line_handler) | LINE返信 | [x] | [x] |
-| T-007 | reset_session | セッション初期化 | [x] | [x] |
-| T-008 | cleanup_expired_sessions | TTL超過セッション削除 | [x] | [x] |
+| T-006 | reset_session | セッション初期化 | [x] | [x] |
+| T-007 | cleanup_expired_sessions | TTL超過セッション削除 | [x] | [x] |
 
 ## システムプロンプト管理表
 
@@ -47,6 +50,5 @@
 
 | サービス | アカウント | APIキー/トークン | セットアップ |
 |---------|-----------|----------------|------------|
-| LINE Developers | [ ] | [ ] Channel Secret / Access Token | [ ] チャネル作成・Webhook URL設定 |
 | Anthropic API | [ ] | [ ] ANTHROPIC_API_KEY | [ ] 課金設定 |
 | Render | [ ] | — | [ ] サービス作成・環境変数設定 |

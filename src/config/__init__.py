@@ -17,8 +17,6 @@ def _required(name: str) -> str:
     return value
 
 
-LINE_CHANNEL_SECRET: str = _required("LINE_CHANNEL_SECRET")
-LINE_CHANNEL_ACCESS_TOKEN: str = _required("LINE_CHANNEL_ACCESS_TOKEN")
 ANTHROPIC_API_KEY: str = _required("ANTHROPIC_API_KEY")
 
 PORT: int = int(os.environ.get("PORT", "8940"))
@@ -26,3 +24,4 @@ SESSION_TTL_SECONDS: int = int(os.environ.get("SESSION_TTL_SECONDS", "3600"))
 
 CLAUDE_MODEL: str = "claude-sonnet-4-5"
 MAX_USER_MESSAGE_LENGTH: int = 5000
+MAX_HISTORY_TURNS: int = 60
