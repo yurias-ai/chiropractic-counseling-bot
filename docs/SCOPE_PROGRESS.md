@@ -5,7 +5,7 @@
 このプロジェクトはAIコントローラー型（LINEチャットボット）のため、Phase 3/4/8はスキップします。
 
 - [x] Phase 1: 要件定義（Agent 1）
-- [ ] Phase 2: Git管理（Agent 2）
+- [x] Phase 2: Git管理（Agent 2）
 - Phase 3: フロントエンド基盤 — スキップ（UIなし）
 - Phase 4: ページ実装 — スキップ（UIなし）
 - [ ] Phase 5: 環境構築（Agent 5）— LINE Developers / Anthropic APIキー設定
