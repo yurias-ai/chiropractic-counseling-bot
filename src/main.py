@@ -5,11 +5,12 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from src.api.routes import router as practice_router
+from src.auth import verify_user
 from src.session.store import cleanup_loop
 
 logging.basicConfig(
@@ -46,10 +47,10 @@ async def health() -> dict:
     return {"status": "ok"}
 
 
-@app.get("/")
+@app.get("/", dependencies=[Depends(verify_user)])
 async def index() -> FileResponse:
     return FileResponse(_STATIC_DIR / "index.html")
 
 
-# 静的アセット（あれば）配信。index.html はルートで明示返却するため html=False。
+# 静的アセット配信。/static/img/ の写真にはBasic認証はかけない（認証後の遷移先のため）。
 app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")

@@ -6,17 +6,18 @@ import logging
 import uuid
 
 from anthropic import APIError, RateLimitError
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from src.ai.patient import continue_practice, start_practice
 from src.ai.scoring import call_scoring_ai
+from src.auth import verify_user
 from src.config import MAX_USER_MESSAGE_LENGTH
 from src.session.store import get_session, reset_session
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/practice", tags=["practice"])
+router = APIRouter(prefix="/api/practice", tags=["practice"], dependencies=[Depends(verify_user)])
 
 
 # ─────────────────────────────────────────────
